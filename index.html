@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Maestro</title>
+  <!-- Modern CDN approaches -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-white min-h-screen flex flex-col" x-data="{ darkMode: false }" :class="{ 'dark': darkMode }">
+  <header class="sticky top-0 z-50 w-full border-b bg-white dark:bg-gray-800 dark:text-white">
+    <div class="flex h-16 items-center justify-between px-4 max-w-screen-xl mx-auto">
+      <div class="flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6">
+          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+          <path d="M12 6v6l4 2" />
+        </svg>
+        <span class="font-bold text-xl">Meeting Maestro</span>
+      </div>
+      <button @click="darkMode = !darkMode" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+        <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+        <svg x-show="darkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      </button>
+    </div>
+  </header>
+  
+  <main class="flex-1 flex flex-col items-center p-4">
+    <div class="text-center max-w-3xl mx-auto mt-8 px-4">
+      <p class="text-sm uppercase font-semibold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">Streamline Your Meetings</p>
+      <h1 class="mt-2 text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">Transform Meetings into Action</h1>
+      <p class="mt-4 text-base text-gray-500 dark:text-gray-400">Upload your meeting transcript and let AI automatically extract summaries, decisions, and action items. Create personalized follow-ups in seconds.</p>
+    </div>
+
+    <div x-data="uploadHandler()" class="max-w-md w-full mt-8">
+      <!-- Processing notification -->
+      <div id="processing-notification" class="mb-4 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-4 rounded-lg text-center hidden">
+        <div class="inline-block h-6 w-6 animate-spin rounded-full border-4 border-blue-300 border-t-blue-600 mr-2"></div>
+        <span>Processing transcript with AI... This may take a moment.</span>
+      </div>
+
+      <!-- Error notification -->
+      <div id="error-notification" class="mb-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 p-4 rounded-lg text-center hidden">
+        Error occurred
+      </div>
+
+      <!-- Upload card -->
+      <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+        <div x-show="hasError" class="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 p-4 rounded-lg">
+          <p x-text="errorMessage"></p>
+        </div>
+
+        <div 
+          @dragover.prevent="isDragging = true" 
+          @dragleave.prevent="isDragging = false" 
+          @drop.prevent="handleFileDrop($event)"
+          class="border-2 border-dashed rounded-lg p-6 text-center transition-all" 
+          :class="isUploading ? 'opacity-50 pointer-events-none' : (isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-600')">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          
+          <p class="mt-2 text-sm font-medium text-gray-900 dark:text-white" x-text="fileName || 'Drag and drop your transcript file'"></p>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Supports TXT, CSV, JSON</p>
+          
+          <div x-show="!isUploading && !fileName" class="mt-4">
+            <label for="file-upload" class="relative cursor-pointer bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium inline-flex items-center">
+              <span>Upload File</span>
+              <input id="file-upload" type="file" class="sr-only" @change="handleFileSelect">
+            </label>
+          </div>
+          
+          <div x-show="isUploading" class="mt-4">
+            <div class="inline-block h-6 w-6 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Processing transcript...</p>
+          </div>
+        </div>
+        
+        <div class="relative my-4">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">OR</span>
+          </div>
+        </div>
+        
+        <button 
+          @click="loadDemo()" 
+          :disabled="isUploading"
+          class="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white py-2 px-4 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          Try Demo
+        </button>
+      </div>
+    </div>
+
+    <div class="mt-16 max-w-screen-xl w-full">
+      <h2 class="text-2xl font-bold text-center text-gray-900 dark:text-white mb-8">Features</h2>
+      <div class="grid md:grid-cols-3 gap-8 px-4">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <div class="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Smart Summaries</h3>
+          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Get concise, accurate summaries of your meetings automatically generated from transcripts.</p>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <div class="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Action Item Tracking</h3>
+          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Never miss a task with automatically extracted action items, assignees, and due dates.</p>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <div class="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">One-Click Follow-Ups</h3>
+          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Generate personalized follow-up emails with meeting summaries and action items automatically included.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t py-6 w-full bg-white dark:bg-gray-800 dark:text-white mt-16">
+    <div class="flex flex-col md:flex-row items-center justify-center md:justify-between max-w-screen-xl mx-auto px-4">
+      <p class="text-center text-sm text-gray-500 dark:text-gray-400">Built with Alpine.js and Tailwind CSS</p>
+      <div class="flex items-center space-x-1 mt-2 md:mt-0">
+        <span class="text-sm text-gray-500 dark:text-gray-400">Powered by Gemini AI</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Simplified script approach -->
+  <script src="js/app.js"></script>
+</body>
+</html>
