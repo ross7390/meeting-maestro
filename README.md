@@ -2,6 +2,10 @@
 
 Meeting Maestro is an AI-powered web application that transforms meeting transcripts into actionable insights. It automatically analyzes meeting transcripts to generate summaries, extract key decisions, identify action items, and create personalized follow-up emails.
 
+## Demo
+
+🎥 [click here](https://github.com/brettenf-UW/meeting-maestro/raw/main/Meeting%20Maestro%20Demo%20Video.mp4)
+
 ## Features
 
 ### Core Functionality
