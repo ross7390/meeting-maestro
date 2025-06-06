@@ -95,3 +95,4 @@ Deploy to GitHub Pages:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+#This is Jessie’s personal submission for 579 course use.
